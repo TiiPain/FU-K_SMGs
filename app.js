@@ -3,6 +3,9 @@ const STORAGE_KEYS = {
   logs: "pubg-smg-death-logs",
 };
 
+const MESSAGE_ROTATE_MS = 7000;
+const COUNTER_REFRESH_MS = 6000;
+
 const trollMessages = [
   "TiiPain patch request: SMGs currently ignore the concept of recoil.",
   "Dear devs, my vest is not a coupon for free SMG damage.",
@@ -88,29 +91,15 @@ function pickMessage() {
   trollMessageEl.textContent = trollMessages[i];
 }
 
-function setFutureClipState() {
-  const clipButton = document.querySelector(".killer-card .btn");
-  if (clipButton) {
-    clipButton.title = "Clipping will be implemented later.";
-  }
+function startAutoMessageRotation() {
+  pickMessage();
+  setInterval(pickMessage, MESSAGE_ROTATE_MS);
 }
 
-addDeathBtn.addEventListener("click", () => {
-  writeCount(readCount() + 1);
+function startCounterRefresh() {
   renderCount();
-});
-
-undoDeathBtn.addEventListener("click", () => {
-  writeCount(Math.max(0, readCount() - 1));
-  renderCount();
-});
-
-resetDeathBtn.addEventListener("click", () => {
-  writeCount(0);
-  renderCount();
-});
-
-newMessageBtn.addEventListener("click", pickMessage);
+  setInterval(renderCount, COUNTER_REFRESH_MS);
+}
 
 deathForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -133,7 +122,6 @@ clearLogsBtn.addEventListener("click", () => {
   renderLogs();
 });
 
-renderCount();
+startCounterRefresh();
 renderLogs();
-pickMessage();
-setFutureClipState();
+startAutoMessageRotation();
