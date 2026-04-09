@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PUBG SMG Death Tracker</title>
+    <meta
+      name="description"
+      content="A troll counter for PUBG SMG deaths with stream clip finder shortcuts."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee:wght@400&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero card">
+        <p class="eyebrow">PUBG Damage Report</p>
+        <h1>SMG Death Counter</h1>
+        <p class="subtitle">
+          Every time an SMG sends you back to lobby, add one more point to this
+          masterpiece of emotional damage.
+        </p>
+
+        <div class="counter-wrap">
+          <p class="counter-label">Total SMG deaths</p>
+          <p id="deathCount" class="death-count" aria-live="polite">0</p>
+        </div>
+
+        <div class="action-row">
+          <button id="addDeathBtn" class="btn btn-danger" type="button">+ I got melted by SMG</button>
+          <button id="undoDeathBtn" class="btn btn-ghost" type="button">Undo</button>
+          <button id="resetDeathBtn" class="btn btn-ghost" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section class="card message-zone">
+        <h2>Message to PUBG Devs</h2>
+        <p id="trollMessage" class="troll-message"></p>
+        <button id="newMessageBtn" class="btn btn-primary" type="button">New troll message</button>
+      </section>
+
+      <section class="card logs-zone">
+        <div class="logs-header">
+          <h2>Recent deaths</h2>
+          <button id="clearLogsBtn" class="btn btn-ghost" type="button">Clear logs</button>
+        </div>
+
+        <form id="deathForm" class="death-form">
+          <label>
+            Killer name
+            <input id="killerName" name="killerName" type="text" maxlength="40" placeholder="TryHard_420" required />
+          </label>
+          <label>
+            Platform
+            <select id="platform" name="platform">
+              <option value="steam">Steam</option>
+              <option value="xbox">Xbox</option>
+              <option value="playstation">PlayStation</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>
+            Match time
+            <input id="matchTime" name="matchTime" type="datetime-local" required />
+          </label>
+          <button class="btn btn-primary" type="submit">Log death</button>
+        </form>
+
+        <ul id="deathLogList" class="death-log-list"></ul>
+      </section>
+
+      <section class="card clip-zone">
+        <h2>Clip Finder (PUBG.report style helper)</h2>
+        <p>
+          This version can not auto-clip streams yet, but it gives fast links to search
+          if your killer was live around your match time on Twitch, YouTube, or Kick.
+        </p>
+
+        <form id="clipFinderForm" class="clip-form">
+          <label>
+            Killer name
+            <input id="clipKiller" type="text" maxlength="40" placeholder="Killer username" required />
+          </label>
+          <label>
+            Approx death time
+            <input id="clipTime" type="datetime-local" required />
+          </label>
+          <button class="btn btn-primary" type="submit">Find stream links</button>
+        </form>
+
+        <div id="clipResults" class="clip-results"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Made for laughs and tears. Not affiliated with PUBG, Twitch, YouTube, or Kick.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
