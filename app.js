@@ -3,10 +3,10 @@ const STORAGE_KEYS = {
   logs: "pubg-smg-death-logs",
 };
 
-const AUTO_SCAN_INTERVAL_MS = 5 * 60 * 1000;
+const AUTO_SCAN_INTERVAL_MS = 60 * 1000;
 const AUTO_PLAYER_NAME = "TiiPain";
 const AUTO_SHARD = "steam";
-const AUTO_LOOKBACK_MATCHES = 10;
+const AUTO_LOOKBACK_MATCHES = 3;
 const MESSAGE_ROTATE_MS = 7000;
 const COUNTER_REFRESH_MS = 6000;
 
@@ -261,6 +261,13 @@ async function runAutoScan(silentMode = true) {
 
 function startAutoScan() {
   runAutoScan(true);
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      runAutoScan(true);
+    }
+  });
+
   setInterval(() => {
     if (document.hidden) return;
     runAutoScan(true);

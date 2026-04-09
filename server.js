@@ -222,14 +222,22 @@ async function getTelemetryEvents(telemetryUrl) {
   return Array.isArray(response.data) ? response.data : [];
 }
 
-function extractSmgDeathEvents(events, playerName) {
-  const target = String(playerName || "").toLowerCase();
+function extractSmgDeathEvents(events, playerName, playerId) {
+  const targetName = String(playerName || "").toLowerCase();
+  const targetAccountId = String(playerId || "").toLowerCase();
 
   return events
     .filter((e) => e?._T === "LogPlayerKillV2" || e?._T === "LogPlayerKill")
     .map((e) => {
-      const victimName = String(e?.victim?.name || e?.victimGameResult?.accountId || "").toLowerCase();
-      if (victimName !== target) return null;
+      const victimName = String(e?.victim?.name || "").toLowerCase();
+      const victimAccountId = String(
+        e?.victim?.accountId || e?.victimGameResult?.accountId || e?.victimAccountId || ""
+      ).toLowerCase();
+
+      const matchedByName = Boolean(victimName) && victimName === targetName;
+      const matchedByAccount = Boolean(victimAccountId) && victimAccountId === targetAccountId;
+
+      if (!matchedByName && !matchedByAccount) return null;
 
       const killerName = e?.killer?.name || "Unknown";
       const weapon = e?.damageCauserName || e?.damageTypeCategory || "Unknown";
@@ -435,7 +443,7 @@ app.post("/api/report/scan", async (req, res) => {
       const telemetryUrl = await getMatchTelemetryUrl(shard, matchId);
       if (!telemetryUrl) continue;
       const events = await getTelemetryEvents(telemetryUrl);
-      const deaths = extractSmgDeathEvents(events, playerName).map((d) => ({
+      const deaths = extractSmgDeathEvents(events, playerName, playerId).map((d) => ({
         ...d,
         matchId,
       }));
