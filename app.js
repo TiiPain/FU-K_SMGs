@@ -31,7 +31,9 @@ const scanSummary = document.getElementById("scanSummary");
 const killerResults = document.getElementById("killerResults");
 const apiStatus = document.getElementById("apiStatus");
 
-const API_BASE_CANDIDATES = ["", "http://localhost:3000"];
+const configuredApiBase = String(window.APP_CONFIG?.API_BASE_URL || "").trim().replace(/\/$/, "");
+const isGithubPages = window.location.hostname.endsWith("github.io");
+const API_BASE_CANDIDATES = configuredApiBase ? [configuredApiBase] : ["", "http://localhost:3000"];
 
 function readCount() {
   const raw = Number(localStorage.getItem(STORAGE_KEYS.count));
@@ -337,6 +339,12 @@ async function runAutoScan(silentMode = true) {
     renderKillerCards(data);
     setApiStatus(silentMode ? "Auto-sync active" : "Scan complete");
   } catch (error) {
+    if (isGithubPages && !configuredApiBase) {
+      setScanSummary("Backend not configured. Set APP_CONFIG.API_BASE_URL in config.js.");
+      setApiStatus("Backend missing");
+      return;
+    }
+
     setScanSummary(`Scan failed: ${error.message}`);
     setApiStatus("Error");
   }

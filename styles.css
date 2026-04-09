@@ -60,6 +60,10 @@ body {
   display: none;
 }
 
+.hidden-sync {
+  display: none;
+}
+
 h1,
 h2 {
   margin: 0.2rem 0 0.6rem;
