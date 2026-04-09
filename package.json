@@ -1,0 +1,22 @@
+{
+  "name": "fu-k-smgs",
+  "version": "2.0.0",
+  "packageManager": "yarn@4.13.0",
+  "description": "TiiPain PUBG SMG death tracker with secure backend integrations",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "zod": "^3.24.2"
+  }
+}
