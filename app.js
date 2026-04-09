@@ -164,9 +164,32 @@ async function getJson(url) {
   const response = await fetch(url, { method: "GET" });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(body.error || `Request failed (${response.status})`);
+    const error = new Error(body.error || `Request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
   }
   return body;
+}
+
+async function requestScan() {
+  const params = new URLSearchParams({
+    playerName: AUTO_PLAYER_NAME,
+    shard: AUTO_SHARD,
+    lookbackMatches: String(AUTO_LOOKBACK_MATCHES),
+  });
+
+  try {
+    return await getJson(`/api/report/scan?${params.toString()}`);
+  } catch (error) {
+    if (error?.status === 404 || error?.status === 405) {
+      return postJson("/api/report/scan", {
+        playerName: AUTO_PLAYER_NAME,
+        shard: AUTO_SHARD,
+        lookbackMatches: AUTO_LOOKBACK_MATCHES,
+      });
+    }
+    throw error;
+  }
 }
 
 function renderLogs() {
@@ -276,12 +299,7 @@ async function runAutoScan(silentMode = true) {
   }
 
   try {
-    const params = new URLSearchParams({
-      playerName: AUTO_PLAYER_NAME,
-      shard: AUTO_SHARD,
-      lookbackMatches: String(AUTO_LOOKBACK_MATCHES),
-    });
-    const data = await getJson(`/api/report/scan?${params.toString()}`);
+    const data = await requestScan();
 
     const autoApplied = applyAutoDeaths(data);
     scanSummary.textContent = `${data.playerName}: ${data.smgDeathCount} SMG deaths found. ${autoApplied.newAutoDeaths > 0 ? `Auto-added ${autoApplied.newAutoDeaths} new death${autoApplied.newAutoDeaths > 1 ? "s" : ""}.` : "No new deaths to add."}`;
