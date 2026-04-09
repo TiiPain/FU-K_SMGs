@@ -21,6 +21,7 @@ const trollMessages = [
 
 const deathCountEl = document.getElementById("deathCount");
 const trollMessageEl = document.getElementById("trollMessage");
+const killerFeedEl = document.getElementById("killerFeed");
 
 const deathForm = document.getElementById("deathForm");
 const deathLogList = document.getElementById("deathLogList");
@@ -138,6 +139,7 @@ function applyAutoDeaths(scanResult) {
   writeLogs(logs.concat(newLogRows));
   writeCount(readCount() + newIds.length);
   renderLogs();
+  renderKillerFeed();
   renderCount();
 
   return { newAutoDeaths: newIds.length };
@@ -176,6 +178,28 @@ function renderLogs() {
       const happenedAt = formatDate(entry.matchTime);
       return `<li class="log-item"><strong>${killer}</strong> (${platform}) ended your run at ${happenedAt}</li>`;
     })
+    .join("");
+}
+
+function renderKillerFeed() {
+  if (!killerFeedEl) return;
+
+  const logs = readLogs();
+  if (!logs.length) {
+    killerFeedEl.innerHTML = '<li class="killer-feed-item">No killers yet</li>';
+    return;
+  }
+
+  const counts = new Map();
+  for (const row of logs) {
+    const killer = String(row?.killerName || "Unknown").trim() || "Unknown";
+    counts.set(killer, (counts.get(killer) || 0) + 1);
+  }
+
+  const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+
+  killerFeedEl.innerHTML = sorted
+    .map(([killer, deaths]) => `<li class="killer-feed-item">${escapeHtml(killer)} x${deaths}</li>`)
     .join("");
 }
 
@@ -296,10 +320,12 @@ if (clearLogsBtn) {
   clearLogsBtn.addEventListener("click", () => {
     writeLogs([]);
     renderLogs();
+    renderKillerFeed();
   });
 }
 
 startCounterRefresh();
 renderLogs();
+renderKillerFeed();
 startAutoMessageRotation();
 startAutoScan();
