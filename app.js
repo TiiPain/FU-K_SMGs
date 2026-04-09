@@ -31,6 +31,8 @@ const scanSummary = document.getElementById("scanSummary");
 const killerResults = document.getElementById("killerResults");
 const apiStatus = document.getElementById("apiStatus");
 
+const API_BASE_CANDIDATES = ["", "http://localhost:3000"];
+
 function readCount() {
   const raw = Number(localStorage.getItem(STORAGE_KEYS.count));
   return Number.isFinite(raw) && raw > 0 ? raw : 0;
@@ -90,6 +92,12 @@ function renderCount() {
 function setApiStatus(label) {
   if (apiStatus) {
     apiStatus.textContent = label;
+  }
+}
+
+function setScanSummary(text) {
+  if (scanSummary) {
+    scanSummary.textContent = text;
   }
 }
 
@@ -171,6 +179,10 @@ async function getJson(url) {
   return body;
 }
 
+function withBase(base, pathWithQuery) {
+  return `${base}${pathWithQuery}`;
+}
+
 async function requestScan() {
   const params = new URLSearchParams({
     playerName: AUTO_PLAYER_NAME,
@@ -178,18 +190,39 @@ async function requestScan() {
     lookbackMatches: String(AUTO_LOOKBACK_MATCHES),
   });
 
-  try {
-    return await getJson(`/api/report/scan?${params.toString()}`);
-  } catch (error) {
-    if (error?.status === 404 || error?.status === 405) {
-      return postJson("/api/report/scan", {
-        playerName: AUTO_PLAYER_NAME,
-        shard: AUTO_SHARD,
-        lookbackMatches: AUTO_LOOKBACK_MATCHES,
-      });
+  const pathWithQuery = `/api/report/scan?${params.toString()}`;
+  const requestBody = {
+    playerName: AUTO_PLAYER_NAME,
+    shard: AUTO_SHARD,
+    lookbackMatches: AUTO_LOOKBACK_MATCHES,
+  };
+
+  let lastError = null;
+
+  for (const base of API_BASE_CANDIDATES) {
+    const getUrl = withBase(base, pathWithQuery);
+    const postUrl = withBase(base, "/api/report/scan");
+
+    try {
+      return await getJson(getUrl);
+    } catch (error) {
+      lastError = error;
+
+      if (error?.status === 404 || error?.status === 405) {
+        try {
+          return await postJson(postUrl, requestBody);
+        } catch (postError) {
+          lastError = postError;
+          continue;
+        }
+      }
+
+      continue;
     }
-    throw error;
   }
+
+  if (lastError) throw lastError;
+  throw new Error("No API endpoint available");
 }
 
 function renderLogs() {
@@ -291,22 +324,20 @@ function renderKillerCards(scanResult) {
 }
 
 async function runAutoScan(silentMode = true) {
-  if (!scanSummary) return;
-
   if (!silentMode) {
     setApiStatus("Scanning...");
-    scanSummary.textContent = "Scanning PUBG matches...";
+    setScanSummary("Scanning PUBG matches...");
   }
 
   try {
     const data = await requestScan();
 
     const autoApplied = applyAutoDeaths(data);
-    scanSummary.textContent = `${data.playerName}: ${data.smgDeathCount} SMG deaths found. ${autoApplied.newAutoDeaths > 0 ? `Auto-added ${autoApplied.newAutoDeaths} new death${autoApplied.newAutoDeaths > 1 ? "s" : ""}.` : "No new deaths to add."}`;
+    setScanSummary(`${data.playerName}: ${data.smgDeathCount} SMG deaths found. ${autoApplied.newAutoDeaths > 0 ? `Auto-added ${autoApplied.newAutoDeaths} new death${autoApplied.newAutoDeaths > 1 ? "s" : ""}.` : "No new deaths to add."}`);
     renderKillerCards(data);
     setApiStatus(silentMode ? "Auto-sync active" : "Scan complete");
   } catch (error) {
-    scanSummary.textContent = `Scan failed: ${error.message}`;
+    setScanSummary(`Scan failed: ${error.message}`);
     setApiStatus("Error");
   }
 }

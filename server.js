@@ -12,6 +12,10 @@ const app = express();
 const port = Number(process.env.PORT || 3000);
 const isProd = process.env.NODE_ENV === "production";
 const allowedOrigin = process.env.ALLOWED_ORIGIN || `http://localhost:${port}`;
+const allowedOrigins = String(allowedOrigin)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 const pubgApiKey = process.env.PUBG_API_KEY || "";
 const twitchClientId = process.env.TWITCH_CLIENT_ID || "";
@@ -45,7 +49,13 @@ app.use(
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (!origin || origin === allowedOrigin || !isProd) {
+  const originAllowed =
+    !origin ||
+    !isProd ||
+    allowedOrigins.includes("*") ||
+    allowedOrigins.includes(origin);
+
+  if (originAllowed) {
     if (origin) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Vary", "Origin");
