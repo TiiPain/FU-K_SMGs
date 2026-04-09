@@ -133,7 +133,6 @@ function findMatchingVod(videos, happenedAtIso) {
     const startMs = startAt.getTime();
     const endMs = startMs + durationSeconds * 1000;
 
-    // 90s buffer helps compensate for ingest/telemetry drift.
     if (targetMs >= startMs - 90_000 && targetMs <= endMs + 90_000) {
       const offsetSeconds = Math.max(0, Math.floor((targetMs - startMs) / 1000));
       return {

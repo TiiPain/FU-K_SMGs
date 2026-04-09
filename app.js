@@ -81,18 +81,15 @@ function formatDate(isoString) {
 }
 
 function renderCount() {
-  deathCountEl.textContent = String(readCount());
+  if (deathCountEl) {
+    deathCountEl.textContent = String(readCount());
+  }
 }
 
 function setApiStatus(label) {
   if (apiStatus) {
     apiStatus.textContent = label;
   }
-}
-
-function safeNum(value, fallback = 0) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
 }
 
 function buildAutoEventId(eventRow) {
@@ -162,6 +159,8 @@ async function postJson(url, payload) {
 }
 
 function renderLogs() {
+  if (!deathLogList) return;
+
   const logs = readLogs();
   if (!logs.length) {
     deathLogList.innerHTML = '<li class="log-item">No manual logs yet.</li>';
@@ -181,6 +180,7 @@ function renderLogs() {
 }
 
 function pickMessage() {
+  if (!trollMessageEl) return;
   const i = Math.floor(Math.random() * trollMessages.length);
   trollMessageEl.textContent = trollMessages[i];
 }
@@ -267,26 +267,30 @@ function startAutoScan() {
   }, AUTO_SCAN_INTERVAL_MS);
 }
 
-deathForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const killerName = document.getElementById("killerName").value.trim();
-  const platform = document.getElementById("platform").value;
-  const matchTime = document.getElementById("matchTime").value;
-  if (!killerName || !matchTime) return;
+if (deathForm) {
+  deathForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const killerName = document.getElementById("killerName")?.value.trim() || "";
+    const platform = document.getElementById("platform")?.value || "other";
+    const matchTime = document.getElementById("matchTime")?.value || "";
+    if (!killerName || !matchTime) return;
 
-  const logs = readLogs();
-  logs.push({ killerName, platform, matchTime });
-  writeLogs(logs);
-  writeCount(readCount() + 1);
-  deathForm.reset();
-  renderCount();
-  renderLogs();
-});
+    const logs = readLogs();
+    logs.push({ killerName, platform, matchTime });
+    writeLogs(logs);
+    writeCount(readCount() + 1);
+    deathForm.reset();
+    renderCount();
+    renderLogs();
+  });
+}
 
-clearLogsBtn.addEventListener("click", () => {
-  writeLogs([]);
-  renderLogs();
-});
+if (clearLogsBtn) {
+  clearLogsBtn.addEventListener("click", () => {
+    writeLogs([]);
+    renderLogs();
+  });
+}
 
 startCounterRefresh();
 renderLogs();

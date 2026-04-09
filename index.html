@@ -23,7 +23,7 @@
         <p class="eyebrow">Profile: TiiPain</p>
         <h1>TiiPain vs SMGs</h1>
         <p class="subtitle">
-          Auto-syncs from PUBG API data and updates by itself. Visitors only see the live counter.
+          Auto counter from PUBG API.
         </p>
 
         <div class="hero-grid">
@@ -39,60 +39,15 @@
         </div>
       </section>
 
-      <section class="card api-zone">
-        <div class="logs-header">
-          <h2>Future Kill Feed Hunt</h2>
-          <p class="status-pill" aria-live="polite">Auto mode</p>
-        </div>
-
-        <p class="scan-summary">
-          This area is reserved for a future PUBG API and stream matching feature. Visitors do not need to touch anything here.
-        </p>
-
-        <div class="killer-results">
-          <div class="killer-card">
-            <p class="killer-title"><strong>Clip Hunter</strong></p>
-            <p class="note">Coming later: kill-time matching, stream lookup, and auto clipping.</p>
-            <p class="note">For now this is locked and hidden from visitors.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="card logs-zone">
-        <div class="logs-header">
-          <h2>Manual Death Log</h2>
-          <button id="clearLogsBtn" class="btn btn-ghost" type="button">Clear Logs</button>
-        </div>
-
-        <form id="deathForm" class="death-form">
-          <label>
-            Killer name
-            <input id="killerName" name="killerName" type="text" maxlength="40" placeholder="TryHard_420" required />
-          </label>
-          <label>
-            Platform
-            <select id="platform" name="platform">
-              <option value="steam">Steam</option>
-              <option value="xbox">Xbox</option>
-              <option value="playstation">PlayStation</option>
-              <option value="other">Other</option>
-            </select>
-          </label>
-          <label>
-            Match time
-            <input id="matchTime" name="matchTime" type="datetime-local" required />
-          </label>
-          <button class="btn btn-primary" type="submit">Log Death</button>
-        </form>
-
-        <ul id="deathLogList" class="death-log-list"></ul>
+      <section class="hidden-sync" aria-hidden="true">
+        <p id="apiStatus"></p>
+        <p id="scanSummary"></p>
+        <div id="killerResults"></div>
       </section>
     </main>
 
     <footer class="footer">
-      <p>
-        Personal project for TiiPain. Auto-syncs from PUBG API data. Not affiliated with PUBG, Twitch, YouTube, or Kick.
-      </p>
+      <p>TiiPain SMG board.</p>
     </footer>
 
     <script src="app.js"></script>
