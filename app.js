@@ -3,6 +3,10 @@ const STORAGE_KEYS = {
   logs: "pubg-smg-death-logs",
 };
 
+const AUTO_SCAN_INTERVAL_MS = 5 * 60 * 1000;
+const AUTO_PLAYER_NAME = "TiiPain";
+const AUTO_SHARD = "steam";
+const AUTO_LOOKBACK_MATCHES = 10;
 const MESSAGE_ROTATE_MS = 7000;
 const COUNTER_REFRESH_MS = 6000;
 
@@ -16,15 +20,15 @@ const trollMessages = [
 ];
 
 const deathCountEl = document.getElementById("deathCount");
-const addDeathBtn = document.getElementById("addDeathBtn");
-const undoDeathBtn = document.getElementById("undoDeathBtn");
-const resetDeathBtn = document.getElementById("resetDeathBtn");
 const trollMessageEl = document.getElementById("trollMessage");
-const newMessageBtn = document.getElementById("newMessageBtn");
 
 const deathForm = document.getElementById("deathForm");
 const deathLogList = document.getElementById("deathLogList");
 const clearLogsBtn = document.getElementById("clearLogsBtn");
+
+const scanSummary = document.getElementById("scanSummary");
+const killerResults = document.getElementById("killerResults");
+const apiStatus = document.getElementById("apiStatus");
 
 function readCount() {
   const raw = Number(localStorage.getItem(STORAGE_KEYS.count));
@@ -48,6 +52,19 @@ function writeLogs(logs) {
   localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(logs));
 }
 
+function readSeenAutoEvents() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem("pubg-smg-seen-auto-events") || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSeenAutoEvents(eventIds) {
+  localStorage.setItem("pubg-smg-seen-auto-events", JSON.stringify(eventIds));
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -65,6 +82,83 @@ function formatDate(isoString) {
 
 function renderCount() {
   deathCountEl.textContent = String(readCount());
+}
+
+function setApiStatus(label) {
+  if (apiStatus) {
+    apiStatus.textContent = label;
+  }
+}
+
+function safeNum(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function buildAutoEventId(eventRow) {
+  return [
+    String(eventRow.matchId || ""),
+    String(eventRow.happenedAt || ""),
+    String(eventRow.killerName || ""),
+    String(eventRow.weapon || ""),
+  ].join("|");
+}
+
+function applyAutoDeaths(scanResult) {
+  const deaths = Array.isArray(scanResult?.smgDeaths) ? scanResult.smgDeaths : [];
+  if (!deaths.length) {
+    return { newAutoDeaths: 0 };
+  }
+
+  const seen = new Set(readSeenAutoEvents());
+  const logs = readLogs();
+  const newIds = [];
+  const newLogRows = [];
+
+  for (const death of deaths) {
+    const id = buildAutoEventId(death);
+    if (!id || seen.has(id)) continue;
+
+    seen.add(id);
+    newIds.push(id);
+
+    newLogRows.push({
+      killerName: death.killerName || "Unknown",
+      platform: scanResult.shard || AUTO_SHARD,
+      matchTime: death.happenedAt || new Date().toISOString(),
+      source: "auto",
+      autoEventId: id,
+      matchId: death.matchId || "",
+      weapon: death.weapon || "Unknown",
+    });
+  }
+
+  if (!newIds.length) {
+    return { newAutoDeaths: 0 };
+  }
+
+  writeSeenAutoEvents(Array.from(seen));
+  writeLogs(logs.concat(newLogRows));
+  writeCount(readCount() + newIds.length);
+  renderLogs();
+  renderCount();
+
+  return { newAutoDeaths: newIds.length };
+}
+
+async function postJson(url, payload) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.error || `Request failed (${response.status})`);
+  }
+
+  return body;
 }
 
 function renderLogs() {
@@ -101,6 +195,78 @@ function startCounterRefresh() {
   setInterval(renderCount, COUNTER_REFRESH_MS);
 }
 
+function renderKillerCards(scanResult) {
+  if (!killerResults) return;
+
+  const killers = Array.isArray(scanResult.killers) ? scanResult.killers : [];
+  if (!killers.length) {
+    killerResults.innerHTML = '<div class="killer-card">No killers found in scanned SMG deaths.</div>';
+    return;
+  }
+
+  killerResults.innerHTML = killers
+    .map((killer) => {
+      const name = escapeHtml(killer.killerName || "Unknown");
+      const twitchLink = killer.twitch
+        ? `<a class="stream-link" href="${escapeHtml(killer.twitch.url)}" target="_blank" rel="noopener noreferrer">Twitch: ${escapeHtml(killer.twitch.displayName || killer.twitch.login || name)}</a>`
+        : `<span class="note">No Twitch match</span>`;
+
+      const youtubeLink = killer.youtube?.url
+        ? `<a class="stream-link" href="${escapeHtml(killer.youtube.url)}" target="_blank" rel="noopener noreferrer">YouTube Live</a>`
+        : `<span class="note">No live YouTube match</span>`;
+
+      const kickLink = killer.kick?.url
+        ? `<a class="stream-link" href="${escapeHtml(killer.kick.url)}" target="_blank" rel="noopener noreferrer">Kick Search</a>`
+        : "";
+
+      return `
+        <article class="killer-card">
+          <p class="killer-title"><strong>${name}</strong></p>
+          <div class="link-row">
+            ${twitchLink}
+            ${youtubeLink}
+            ${kickLink}
+          </div>
+          <p class="note">Auto hunt preview from the PUBG API.</p>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+async function runAutoScan(silentMode = true) {
+  if (!scanSummary) return;
+
+  if (!silentMode) {
+    setApiStatus("Scanning...");
+    scanSummary.textContent = "Scanning PUBG matches...";
+  }
+
+  try {
+    const data = await postJson("/api/report/scan", {
+      playerName: AUTO_PLAYER_NAME,
+      shard: AUTO_SHARD,
+      lookbackMatches: AUTO_LOOKBACK_MATCHES,
+    });
+
+    const autoApplied = applyAutoDeaths(data);
+    scanSummary.textContent = `${data.playerName}: ${data.smgDeathCount} SMG deaths found. ${autoApplied.newAutoDeaths > 0 ? `Auto-added ${autoApplied.newAutoDeaths} new death${autoApplied.newAutoDeaths > 1 ? "s" : ""}.` : "No new deaths to add."}`;
+    renderKillerCards(data);
+    setApiStatus(silentMode ? "Auto-sync active" : "Scan complete");
+  } catch (error) {
+    scanSummary.textContent = `Scan failed: ${error.message}`;
+    setApiStatus("Error");
+  }
+}
+
+function startAutoScan() {
+  runAutoScan(true);
+  setInterval(() => {
+    if (document.hidden) return;
+    runAutoScan(true);
+  }, AUTO_SCAN_INTERVAL_MS);
+}
+
 deathForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const killerName = document.getElementById("killerName").value.trim();
@@ -125,3 +291,4 @@ clearLogsBtn.addEventListener("click", () => {
 startCounterRefresh();
 renderLogs();
 startAutoMessageRotation();
+startAutoScan();

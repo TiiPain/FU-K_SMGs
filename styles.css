@@ -55,6 +55,11 @@ body {
   animation: reveal 360ms ease-out both;
 }
 
+.api-zone,
+.logs-zone {
+  display: none;
+}
+
 h1,
 h2 {
   margin: 0.2rem 0 0.6rem;
