@@ -6,7 +6,7 @@
     <title>TiiPain vs SMGs</title>
     <meta
       name="description"
-      content="TiiPain personal PUBG SMG tracker with secure backend-powered killer stream hunt."
+      content="TiiPain personal PUBG SMG tracker that runs locally in the browser."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,7 +23,7 @@
         <p class="eyebrow">Profile: TiiPain</p>
         <h1>TiiPain vs SMGs</h1>
         <p class="subtitle">
-          Live counter + automated killer stream hunt powered by a secure backend.
+          Runs on its own in the browser. No setup, no server, just the counter and logs.
         </p>
 
         <div class="hero-grid">
@@ -47,37 +47,21 @@
 
       <section class="card api-zone">
         <div class="logs-header">
-          <h2>Auto Hunt (PUBG API + Stream APIs)</h2>
-          <p id="apiStatus" class="status-pill" aria-live="polite">Ready</p>
+          <h2>Future Kill Feed Hunt</h2>
+          <p class="status-pill" aria-live="polite">Disabled for now</p>
         </div>
 
-        <form id="autoScanForm" class="scan-form">
-          <label>
-            PUBG Name
-            <input id="scanPlayerName" type="text" maxlength="40" value="TiiPain" required />
-          </label>
+        <p class="scan-summary">
+          This area is reserved for a future PUBG API and stream matching feature. The current site runs fully on its own.
+        </p>
 
-          <label>
-            Shard
-            <select id="scanShard">
-              <option value="steam">Steam</option>
-              <option value="xbox">Xbox</option>
-              <option value="psn">PlayStation</option>
-              <option value="kakao">Kakao</option>
-              <option value="stadia">Stadia</option>
-            </select>
-          </label>
-
-          <label>
-            Matches to scan
-            <input id="scanLookback" type="number" min="1" max="20" value="10" required />
-          </label>
-
-          <button class="btn btn-primary" type="submit">Scan and Find Killers</button>
-        </form>
-
-        <div id="scanSummary" class="scan-summary"></div>
-        <div id="killerResults" class="killer-results"></div>
+        <div class="killer-results">
+          <div class="killer-card">
+            <p class="killer-title"><strong>Clip Hunter</strong></p>
+            <p class="note">Coming later: kill-time matching, stream lookup, and auto clipping.</p>
+            <button class="btn btn-ghost" type="button" disabled>Auto-create Twitch Clip</button>
+          </div>
+        </div>
       </section>
 
       <section class="card logs-zone">
@@ -113,7 +97,7 @@
 
     <footer class="footer">
       <p>
-        Personal project for TiiPain. Keys stay server-side only. Not affiliated with PUBG, Twitch, YouTube, or Kick.
+        Personal project for TiiPain. Runs locally in the browser. Not affiliated with PUBG, Twitch, YouTube, or Kick.
       </p>
     </footer>
 
