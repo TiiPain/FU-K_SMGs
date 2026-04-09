@@ -160,6 +160,15 @@ async function postJson(url, payload) {
   return body;
 }
 
+async function getJson(url) {
+  const response = await fetch(url, { method: "GET" });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.error || `Request failed (${response.status})`);
+  }
+  return body;
+}
+
 function renderLogs() {
   if (!deathLogList) return;
 
@@ -267,11 +276,12 @@ async function runAutoScan(silentMode = true) {
   }
 
   try {
-    const data = await postJson("/api/report/scan", {
+    const params = new URLSearchParams({
       playerName: AUTO_PLAYER_NAME,
       shard: AUTO_SHARD,
-      lookbackMatches: AUTO_LOOKBACK_MATCHES,
+      lookbackMatches: String(AUTO_LOOKBACK_MATCHES),
     });
+    const data = await getJson(`/api/report/scan?${params.toString()}`);
 
     const autoApplied = applyAutoDeaths(data);
     scanSummary.textContent = `${data.playerName}: ${data.smgDeathCount} SMG deaths found. ${autoApplied.newAutoDeaths > 0 ? `Auto-added ${autoApplied.newAutoDeaths} new death${autoApplied.newAutoDeaths > 1 ? "s" : ""}.` : "No new deaths to add."}`;

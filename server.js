@@ -420,13 +420,13 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-app.post("/api/report/scan", async (req, res) => {
+async function handleReportScan(input, res) {
   try {
     if (!pubgApiKey) {
       return res.status(503).json({ error: "PUBG_API_KEY is not configured on server." });
     }
 
-    const parsed = scanSchema.parse(req.body);
+    const parsed = scanSchema.parse(input);
     const { playerName, shard, lookbackMatches } = parsed;
 
     const playerId = await getPubgPlayerId(shard, playerName);
@@ -517,6 +517,20 @@ app.post("/api/report/scan", async (req, res) => {
     }
     return res.status(500).json({ error: sanitizeError(error) });
   }
+}
+
+app.get("/api/report/scan", async (req, res) => {
+  const queryInput = {
+    playerName: req.query.playerName,
+    shard: req.query.shard,
+    lookbackMatches: Number(req.query.lookbackMatches),
+  };
+
+  return handleReportScan(queryInput, res);
+});
+
+app.post("/api/report/scan", async (req, res) => {
+  return handleReportScan(req.body, res);
 });
 
 app.post("/api/report/clip/twitch", async (req, res) => {
